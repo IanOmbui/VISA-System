@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> VERYFIED INSTITUTIONAL STUDENT ATTENDANCE</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg-deep: #060a12;
+    --bg-panel: #0c1220;
+    --bg-card: #101828;
+    --bg-hover: #162035;
+    --border: #1e2d42;
+    --border-glow: #0059ff33;
+    --cyan: #00d4ff;
+    --cyan-dim: #00d4ff44;
+    --cyan-glow: #00d4ff22;
+    --green: #00e58a;
+    --green-dim: #00e58a33;
+    --red: #ff3855;
+    --red-dim: #ff385533;
+    --amber: #ffb800;
+    --amber-dim: #ffb80033;
+    --purple: #b44dff;
+    --purple-dim: #b44dff33;
+    --text-primary: #e8f0fe;
+    --text-secondary: #6b82a0;
+    --text-dim: #3a4d62;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Exo 2', sans-serif;
+    --font-data: 'Rajdhani', sans-serif;
+    --sidebar-w: 240px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    position: relative;
+    overflow: hidden;
+  }
+  .sidebar::after {
+    content:'';
+    position:absolute; top:0; right:0;
+    width:1px; height:100%;
+    background: linear-gradient(180deg, transparent, var(--cyan) 40%, var(--cyan) 60%, transparent);
+    opacity:.15;
+  }
+  .logo-wrap {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; position: relative;
+    box-shadow: 0 0 20px var(--cyan-dim);
+  }
+  .logo-text { font-size: 18px; font-weight: 800; letter-spacing: 2px; }
+  .logo-text span { color: var(--cyan); }
+  .logo-sub { font-size: 9px; color: var(--text-secondary); letter-spacing: 3px; margin-top: 1px; font-family: var(--font-mono); }
+  .system-status {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-secondary);
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+  .nav-section { padding: 14px 12px 6px; }
+  .nav-label { font-size: 9px; letter-spacing: 3px; color: var(--text-dim); padding: 0 6px 8px; font-family: var(--font-mono); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    transition: all .2s; position: relative; margin-bottom: 2px;
+    border: 1px solid transparent;
+    letter-spacing: .5px;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border); }
+  .nav-item.active {
+    background: var(--cyan-glow);
+    color: var(--cyan);
+    border-color: var(--cyan-dim);
+  }
+  .nav-item.active .nav-icon { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto; background: var(--red);
+    color: #fff; font-size: 9px; padding: 1px 6px;
+    border-radius: 10px; font-weight: 700; font-family: var(--font-mono);
+  }
+  .nav-badge.green { background: var(--green); color: var(--bg-deep); }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .admin-profile { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(135deg, #1a3a5c, #0059ff44);
+    border: 1px solid var(--cyan-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--cyan);
+  }
+  .admin-info { flex: 1; }
+  .admin-name { font-size: 12px; font-weight: 600; }
+  .admin-role { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    height: 54px; min-height: 54px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 16px;
+  }
+  .page-title { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .page-crumb { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .live-clock {
+    font-family: var(--font-mono); font-size: 14px;
+    color: var(--cyan); letter-spacing: 2px;
+    background: var(--cyan-glow); padding: 4px 10px;
+    border: 1px solid var(--cyan-dim); border-radius: 6px;
+  }
+  .alert-bell {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg-card);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; position: relative;
+    transition: all .2s;
+  }
+  .alert-bell:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+  .alert-pip {
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red); border: 1px solid var(--bg-panel);
+  }
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 24px;
+  }
+  .content::-webkit-scrollbar { width: 5px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content:'';
+    position:absolute; inset:0; border-radius:12px;
+    background: linear-gradient(135deg, rgba(255,255,255,.01), transparent 60%);
+    pointer-events:none;
+  }
+  .card-title {
+    font-size: 11px; letter-spacing: 2px; color: var(--text-secondary);
+    font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { padding: 16px 18px; }
+  .stat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .stat-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .stat-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+  .stat-icon.green { background: var(--green-dim); color: var(--green); }
+  .stat-icon.red { background: var(--red-dim); color: var(--red); }
+  .stat-icon.amber { background: var(--amber-dim); color: var(--amber); }
+  .stat-icon.purple { background: var(--purple-dim); color: var(--purple); }
+  .stat-delta {
+    font-size: 10px; font-family: var(--font-mono); padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .stat-delta.up { background: var(--green-dim); color: var(--green); }
+  .stat-delta.down { background: var(--red-dim); color: var(--red); }
+  .stat-value { font-size: 32px; font-weight: 800; font-family: var(--font-data); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+  .stat-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .grid-full { margin-bottom: 20px; }
+
+  /* CHART CARD */
+  .chart-card { padding: 18px 20px; }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .chart-title { font-size: 14px; font-weight: 700; }
+  .chart-sub { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); }
+  .chart-legend { display: flex; gap: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tab-btn {
+    padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border);
+    background: transparent; color: var(--text-secondary);
+    transition: all .2s; letter-spacing: .5px; font-family: var(--font-ui);
+  }
+  .tab-btn.active { background: var(--cyan-glow); color: var(--cyan); border-color: var(--cyan-dim); }
+  .tab-btn:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
+
+  /* ACTIVITY FEED */
+  .activity-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .act-dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  }
+  .act-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .act-dot.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .act-dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .act-dot.cyan { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .act-content { flex: 1; }
+  .act-msg { font-size: 12px; }
+  .act-time { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 2px; }
+
+  /* TABLE */
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+  .search-input {
+    flex: 1; background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 14px;
+    color: var(--text-primary); font-size: 13px; font-family: var(--font-ui);
+    outline: none; transition: border-color .2s;
+  }
+  .search-input::placeholder { color: var(--text-dim); }
+  .search-input:focus { border-color: var(--cyan-dim); box-shadow: 0 0 0 3px var(--cyan-glow); }
+  .search-btn {
+    padding: 9px 18px; background: var(--cyan);
+    border: none; border-radius: 8px; color: var(--bg-deep);
+    font-weight: 700; font-size: 12px; cursor: pointer;
+    font-family: var(--font-ui); letter-spacing: 1px;
+    transition: all .2s;
+  }
+  .search-btn:hover { background: #33dcff; box-shadow: 0 0 20px var(--cyan-dim); }
+  .filter-select {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px;
+    color: var(--text-primary); font-size: 12px; font-family: var(--font-ui);
+    outline: none; cursor: pointer;
+  }
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    text-align: left; padding: 10px 14px; font-size: 10px;
+    letter-spacing: 2px; color: var(--text-dim); font-family: var(--font-mono);
+    border-bottom: 1px solid var(--border); background: var(--bg-panel);
+    position: sticky; top: 0;
+  }
+  .data-table td {
+    padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .data-table tr:hover td { background: var(--bg-hover); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-y: auto; max-height: 420px; border-radius: 8px; border: 1px solid var(--border); }
+  .table-wrap::-webkit-scrollbar { width: 4px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: var(--border); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+    padding: 3px 8px; border-radius: 5px;
+  }
+  .badge.present { background: var(--green-dim); color: var(--green); }
+  .badge.absent { background: var(--red-dim); color: var(--red); }
+  .badge.late { background: var(--amber-dim); color: var(--amber); }
+  .badge.excused { background: var(--purple-dim); color: var(--purple); }
+  .badge.active { background: var(--cyan-dim); color: var(--cyan); }
+  .badge.inactive { background: var(--border); color: var(--text-secondary); }
+  .reg-num { font-family: var(--font-mono); font-size: 12px; color: var(--cyan); }
+  .highlight { color: var(--cyan); font-weight: 600; }
+  .action-btn {
+    padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-secondary); transition: all .2s; font-family: var(--font-ui);
+  }
+  .action-btn:hover { border-color: var(--cyan-dim); color: var(--cyan); background: var(--cyan-glow); }
+
+  /* LIVE FEED */
+  .feeds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .feed-cell {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .feed-cell:hover { border-color: var(--cyan-dim); }
+  .feed-cell.alert-feed { border-color: var(--red); box-shadow: 0 0 15px var(--red-dim); animation: alertBlink 1.5s infinite; }
+  @keyframes alertBlink { 0%,100%{box-shadow:0 0 15px var(--red-dim);} 50%{box-shadow:0 0 30px #ff385588;} }
+  .feed-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feed-sim {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(0,100,200,.07) 0%, transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(0,200,100,.05) 0%, transparent 40%);
+  }
+  .feed-noise {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+    opacity: .5;
+  }
+  .feed-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,.8) 0%, transparent 40%);
+  }
+  .feed-hud {
+    position: absolute; inset: 0; padding: 8px;
+    display: flex; flex-direction: column;
+  }
+  .feed-top { display: flex; align-items: center; justify-content: space-between; }
+  .feed-id { font-family: var(--font-mono); font-size: 9px; color: #ffffff88; }
+  .feed-live {
+    display: flex; align-items: center; gap: 4px;
+    font-family: var(--font-mono); font-size: 8px; color: var(--red);
+    background: rgba(255,56,85,.15); padding: 2px 6px; border-radius: 3px;
+    border: 1px solid var(--red-dim);
+  }
+  .feed-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; }
+  .feed-bottom { margin-top: auto; }
+  .feed-location { font-family: var(--font-mono); font-size: 8px; color: rgba(255,255,255,.5); }
+  .feed-count { font-size: 11px; font-weight: 600; color: #fff; margin-top: 2px; }
+  .feed-time { font-family: var(--font-mono); font-size: 9px; color: var(--cyan); margin-top: 1px; }
+  .feed-crosshair {
+    position: absolute;
+    width: 28px; height: 28px;
+    border: 1.5px solid rgba(0,212,255,.5);
+    border-radius: 4px;
+    animation: scanMove 8s linear infinite;
+  }
+  .feed-crosshair::before, .feed-crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(0,212,255,.5);
+  }
+  .feed-crosshair::before { width: 1px; height: 100%; left: 50%; }
+  .feed-crosshair::after { height: 1px; width: 100%; top: 50%; }
+  @keyframes scanMove {
+    0%{top:20%;left:20%} 20%{top:15%;left:60%} 40%{top:55%;left:70%}
+    60%{top:60%;left:25%} 80%{top:30%;left:40%} 100%{top:20%;left:20%}
+  }
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,255,.3), transparent);
+    animation: scanLine 4s linear infinite;
+  }
+  @keyframes scanLine { 0%{top:0;opacity:.8} 100%{top:100%;opacity:0} }
+  .feed-person {
+    position: absolute;
+    width: 16px; height: 28px;
+    border: 1px solid rgba(0,229,138,.4);
+    border-radius: 2px;
+    background: rgba(0,229,138,.05);
+    font-size: 6px; color: var(--green);
+    font-family: var(--font-mono);
+    padding-top: 1px; text-align: center;
+  }
+
+  /* QR SCANNER PAGE */
+  .qr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .qr-scanner-box {
+    border: 2px dashed var(--border);
+    border-radius: 12px; aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; cursor: pointer; transition: all .3s;
+    position: relative; overflow: hidden;
+    background: var(--bg-panel);
+  }
+  .qr-scanner-box:hover { border-color: var(--cyan); box-shadow: 0 0 30px var(--cyan-glow); }
+  .qr-scanner-box.scanning { border-color: var(--cyan); border-style: solid; }
+  .qr-scanner-box.scanning .qr-scan-line { display: block; }
+  .qr-scan-line {
+    display: none;
+    position: absolute; left: 10%; right: 10%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: qrScan 2s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--cyan);
+  }
+  @keyframes qrScan { 0%{top:10%} 50%{top:85%} 100%{top:10%} }
+  .qr-frame {
+    width: 120px; height: 120px; position: relative;
+  }
+  .qr-corner {
+    position: absolute; width: 20px; height: 20px;
+    border-color: var(--cyan); border-style: solid;
+  }
+  .qr-corner.tl { top:0; left:0; border-width: 3px 0 0 3px; }
+  .qr-corner.tr { top:0; right:0; border-width: 3px 3px 0 0; }
+  .qr-corner.bl { bottom:0; left:0; border-width: 0 0 3px 3px; }
+  .qr-corner.br { bottom:0; right:0; border-width: 0 3px 3px 0; }
+  .qr-inner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  #qrOutput { display: flex; align-items: center; justify-content: center; }
+  #qrOutput canvas, #qrOutput img { border-radius: 4px; }
+  .qr-status {
+    font-size: 11px; font-family: var(--font-mono);
+    color: var(--text-secondary); letter-spacing: 1px;
+  }
+  .qr-result-panel { padding: 18px; }
+  .qr-result-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .qr-result-item:last-child { border-bottom: none; }
+  .qr-result-avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--cyan-dim), var(--purple-dim));
+    border: 1px solid var(--border); display: flex;
+    align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .qr-result-info { flex: 1; }
+  .qr-result-name { font-size: 13px; font-weight: 600; }
+  .qr-result-reg { font-size: 11px; color: var(--cyan); font-family: var(--font-mono); }
+  .qr-result-time { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 2px; }
+  .qr-gen-form { margin-bottom: 14px; display: flex; gap: 10px; }
+  .input-field {
+    flex: 1; background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 14px; color: var(--text-primary);
+    font-size: 13px; font-family: var(--font-ui); outline: none;
+  }
+  .input-field:focus { border-color: var(--cyan-dim); box-shadow: 0 0 0 3px var(--cyan-glow); }
+  .btn {
+    padding: 9px 18px; border-radius: 8px; font-weight: 700;
+    font-size: 12px; cursor: pointer; border: none; letter-spacing: 1px;
+    font-family: var(--font-ui); transition: all .2s;
+  }
+  .btn-primary { background: var(--cyan); color: var(--bg-deep); }
+  .btn-primary:hover { background: #33dcff; box-shadow: 0 0 20px var(--cyan-dim); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-ghost:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+  .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-dim); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+
+  /* RFID PAGE */
+  .rfid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .rfid-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; transition: all .2s; cursor: pointer;
+  }
+  .rfid-item:hover { border-color: var(--border-glow); background: var(--bg-hover); }
+  .rfid-item.authorized { border-left: 3px solid var(--green); }
+  .rfid-item.unauthorized { border-left: 3px solid var(--red); }
+  .rfid-item.pending { border-left: 3px solid var(--amber); }
+  .rfid-chip {
+    width: 44px; height: 28px; border-radius: 5px;
+    border: 1.5px solid var(--border); position: relative;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .rfid-chip.auth { background: var(--green-dim); border-color: var(--green); }
+  .rfid-chip.unauth { background: var(--red-dim); border-color: var(--red); }
+  .rfid-chip.pend { background: var(--amber-dim); border-color: var(--amber); }
+  .rfid-chip-inner {
+    width: 24px; height: 16px; border-radius: 2px;
+    background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 1px, transparent 1px, transparent 3px);
+    opacity: .8;
+  }
+  .rfid-info { flex: 1; }
+  .rfid-tag { font-family: var(--font-mono); font-size: 12px; color: var(--cyan); }
+  .rfid-name { font-size: 13px; font-weight: 600; margin: 2px 0; }
+  .rfid-meta { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); }
+  .rfid-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .rfid-reader-panel {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; text-align: center; background: var(--bg-panel);
+    margin-bottom: 14px;
+  }
+  .rfid-reader-icon {
+    width: 70px; height: 70px; border-radius: 50%;
+    border: 2px solid var(--cyan-dim);
+    margin: 0 auto 14px; display: flex; align-items: center;
+    justify-content: center; font-size: 28px;
+    background: var(--cyan-glow); position: relative;
+    animation: rfidPulse 3s infinite;
+  }
+  @keyframes rfidPulse {
+    0%,100%{box-shadow:0 0 0 0 var(--cyan-dim);}
+    50%{box-shadow:0 0 0 20px transparent;}
+  }
+  .rfid-reader-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .rfid-reader-status { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
+
+  /* SAFETY PAGE */
+  .safety-alert-banner {
+    background: linear-gradient(90deg, var(--red-dim), transparent);
+    border: 1px solid var(--red-dim); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .alert-icon { font-size: 22px; }
+  .alert-text { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 700; color: var(--red); }
+  .alert-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-family: var(--font-mono); }
+  .dismiss-btn {
+    padding: 6px 14px; background: var(--red-dim); border: 1px solid var(--red-dim);
+    border-radius: 7px; color: var(--red); font-size: 11px; cursor: pointer;
+    font-family: var(--font-ui); font-weight: 600;
+  }
+  .zone-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+  .zone-card {
+    padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); text-align: center; cursor: pointer; transition: all .2s;
+  }
+  .zone-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+  .zone-card.safe { border-top: 2px solid var(--green); }
+  .zone-card.caution { border-top: 2px solid var(--amber); }
+  .zone-card.danger { border-top: 2px solid var(--red); animation: dangerPulse 2s infinite; }
+  @keyframes dangerPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 20px var(--red-dim);} }
+  .zone-icon { font-size: 24px; margin-bottom: 8px; }
+  .zone-name { font-size: 12px; font-weight: 600; }
+  .zone-count { font-size: 20px; font-weight: 800; font-family: var(--font-data); margin: 4px 0; }
+  .zone-status { font-size: 9px; font-family: var(--font-mono); letter-spacing: 1px; }
+  .zone-status.safe { color: var(--green); }
+  .zone-status.caution { color: var(--amber); }
+  .zone-status.danger { color: var(--red); }
+  .incident-log { }
+  .incident-item {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px; transition: background .2s;
+  }
+  .incident-item:hover { background: var(--bg-hover); }
+  .incident-item:last-child { border-bottom: none; }
+  .inc-type {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .inc-type.info { background: var(--cyan-dim); }
+  .inc-type.warn { background: var(--amber-dim); }
+  .inc-type.crit { background: var(--red-dim); }
+  .inc-desc { flex: 1; font-size: 12px; }
+  .inc-id { font-family: var(--font-mono); font-size: 10px; color: var(--cyan); margin-bottom: 2px; }
+  .inc-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); }
+  .inc-resolve {
+    padding: 4px 10px; border-radius: 5px;
+    background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim);
+    font-size: 10px; cursor: pointer; font-family: var(--font-ui); font-weight: 600;
+  }
+
+  /* ADMIN PAGE */
+  .admin-section { margin-bottom: 20px; }
+  .admin-section-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 12px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .setting-label { font-size: 12px; font-weight: 500; }
+  .setting-desc { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+  .toggle {
+    width: 38px; height: 20px; border-radius: 10px;
+    background: var(--border); position: relative; cursor: pointer;
+    transition: background .3s; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--cyan); }
+  .toggle::after {
+    content:''; position: absolute;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; top: 3px; left: 3px; transition: left .3s;
+  }
+  .toggle.on::after { left: 21px; }
+  .enrollment-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .enroll-stat {
+    padding: 14px; background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px; text-align: center;
+  }
+  .enroll-val { font-size: 28px; font-weight: 800; font-family: var(--font-data); }
+  .enroll-lbl { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 4px; }
+  .add-student-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; }
+  .form-input {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 7px; padding: 9px 12px; color: var(--text-primary);
+    font-size: 12px; font-family: var(--font-ui); outline: none;
+  }
+  .form-input:focus { border-color: var(--cyan-dim); box-shadow: 0 0 0 3px var(--cyan-glow); }
+  .form-full { grid-column: 1/-1; }
+  .notification-queue { }
+  .notif-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-icon { font-size: 16px; }
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 12px; font-weight: 600; }
+  .notif-sub { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); }
+  .notif-time { font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); }
+
+  /* MINI TERMINAL */
+  .terminal {
+    background: #000; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: var(--font-mono); font-size: 11px;
+    height: 130px; overflow-y: auto; margin-top: 12px;
+  }
+  .term-line { margin-bottom: 3px; }
+  .term-prompt { color: var(--cyan); }
+  .term-ok { color: var(--green); }
+  .term-err { color: var(--red); }
+  .term-dim { color: var(--text-secondary); }
+  .term-cursor { animation: blink .8s infinite; display: inline-block; }
+  @keyframes blink { 50%{opacity:0} }
+
+  /* RESPONSIVE HELPERS */
+  @media (max-width: 1200px) {
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .feeds-grid { grid-template-columns: repeat(2,1fr); }
+    .zone-grid { grid-template-columns: repeat(2,1fr); }
+    .qr-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* MINI CHART IN CARD */
+  .mini-bar { display: flex; gap: 3px; align-items: flex-end; height: 40px; }
+  .mini-bar-col {
+    flex: 1; border-radius: 3px 3px 0 0;
+    min-height: 4px; transition: height 1s ease;
+    position: relative; cursor: pointer;
+  }
+  .mini-bar-col:hover::after {
+    content: attr(data-val);
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 9px; color: var(--text-primary); white-space: nowrap;
+  }
+  .scrollable { overflow-y: auto; max-height: 340px; }
+  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* PULSE RING */
+  .pulse-ring {
+    display: inline-block; width: 10px; height: 10px; position: relative;
+  }
+  .pulse-ring::before, .pulse-ring::after {
+    content:''; position:absolute; inset:0; border-radius:50%;
+    border: 1.5px solid var(--green); animation: ringPulse 2s infinite;
+  }
+  .pulse-ring::after { animation-delay: 1s; }
+  @keyframes ringPulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(2.5);opacity:0} }
+
+  /* SECTION SEPARATOR */
+  .sep { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .page-header { margin-bottom: 16px; }
+  .page-header h2 { font-size: 20px; font-weight: 800; }
+  .page-header p { font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 3px; }
+
+  .no-results { text-align: center; padding: 40px; color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
+
+  /* Progress Ring */
+  .progress-ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .progress-ring { transform: rotate(-90deg); }
+  .progress-ring-value { position: absolute; font-size: 18px; font-weight: 800; font-family: var(--font-data); }
+  .progress-ring-label { position: absolute; bottom: 4px; font-size: 8px; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; }
+
+  /* ── SYSTEM LOG STYLES ── */
+  .system-log-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+  }
+  .system-log-panel h3 {
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--cyan);
+  }
+  .system-log-panel ul { list-style: none; padding: 0; }
+  .system-log-panel li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">
+      <div class="logo-icon">🛡</div>
+      <div>
+        <div class="logo-text">Edu<span>Shield</span></div>
+        <div class="logo-sub">SAFETY COMMAND</div>
+      </div>
+    </div>
+  </div>
+  <div class="system-status">
+    <div class="status-dot"></div>
+    SYSTEM ONLINE · v3.4.1
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">MAIN</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">⬛</span> Dashboard
+    </div>
+    <div class="nav-item" data-page="students">
+      <span class="nav-icon">👤</span> Students
+      <span class="nav-badge green">847</span>
+    </div>
+    <div class="nav-item" data-page="attendance">
+      <span class="nav-icon">✅</span> Attendance
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">MONITORING</div>
+    <div class="nav-item" data-page="livefeed">
+      <span class="nav-icon">📹</span> Live Feed
+      <span class="nav-badge">6</span>
+    </div>
+    <div class="nav-item" data-page="safety">
+      <span class="nav-icon">🚨</span> Safety
+      <span class="nav-badge">2</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">IDENTIFICATION</div>
+    <div class="nav-item" data-page="qrscanner">
+      <span class="nav-icon">⬜</span> QR Scanner
+    </div>
+    <div class="nav-item" data-page="rfid">
+      <span class="nav-icon">📡</span> RFID Status
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">SYSTEM</div>
+    <div class="nav-item" data-page="admin">
+      <span class="nav-icon">⚙</span> Admin Panel
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-profile">
+      <div class="avatar">A</div>
+      <div class="admin-info">
+        <div class="admin-name">Admin User</div>
+        <div class="admin-role">SUPER_ADMIN</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="topTitle">Dashboard</div>
+      <div class="page-crumb" id="topCrumb">Overview › Main Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-clock" id="liveClock">00:00:00</div>
+      <div class="alert-bell" title="Notifications">🔔<div class="alert-pip"></div></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ████████ DASHBOARD PAGE ████████ -->
+    <div class="page active" id="page-dashboard">
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="stat-top">
+            <div class="stat-icon cyan">👥</div>
+            <div class="stat-delta up">↑ 2.4%</div>
+          </div>
+          <div class="stat-value" style="color:var(--cyan)">847</div>
+          <div class="stat-label">Total Students Enrolled</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:92%;background:var(--cyan)"></div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-top">
+            <div class="stat-icon green">✅</div>
+            <div class="stat-delta up">↑ 1.1%</div>
+          </div>
+          <div class="stat-value" style="color:var(--green)">783</div>
+          <div class="stat-label">Present Today</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:84%;background:var(--green)"></div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-top">
+            <div class="stat-icon red">❌</div>
+            <div class="stat-delta down">↑ 0.5%</div>
+          </div>
+          <div class="stat-value" style="color:var(--red)">64</div>
+          <div class="stat-label">Absent Today</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:8%;background:var(--red)"></div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-top">
+            <div class="stat-icon amber">⚠</div>
+            <div class="stat-delta down">↓ 3</div>
+          </div>
+          <div class="stat-value" style="color:var(--amber)">12</div>
+          <div class="stat-label">Safety Alerts Active</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:15%;background:var(--amber)"></div></div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="grid-3">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Weekly Attendance Rate</div>
+              <div class="chart-sub">Last 7 days · All classes</div>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Present</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Absent</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="attendanceChart"></canvas></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Attendance Rate</div>
+              <div class="chart-sub">Today's breakdown</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;height:180px;gap:24px">
+            <div class="progress-ring-wrap">
+              <svg class="progress-ring" width="110" height="110">
+                <circle cx="55" cy="55" r="45" fill="none" stroke="var(--border)" stroke-width="8"/>
+                <circle id="pRing" cx="55" cy="55" r="45" fill="none" stroke="var(--cyan)" stroke-width="8"
+                  stroke-dasharray="283" stroke-dashoffset="45" stroke-linecap="round"/>
+              </svg>
+              <div class="progress-ring-value" style="color:var(--cyan)">84%</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span style="font-size:12px">Present: <b>783</b></span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span style="font-size:12px">Absent: <b>64</b></span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span style="font-size:12px">Late: <b>23</b></span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span style="font-size:12px">Excused: <b>18</b></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECOND ROW -->
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Monthly Trend</div>
+              <div class="chart-sub">Attendance vs Safety Incidents</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+
+        <div class="card" style="padding:16px 18px">
+          <div class="card-title">REAL-TIME ACTIVITY LOG</div>
+          <div id="activityFeed" class="scrollable"></div>
+        </div>
+        <!-- persistent system log panel -->
+        <div class="card" style="padding:16px 18px">
+          <div class="card-title">SYSTEM LOG</div>
+          <div id="systemLog" class="system-log-panel">
+            <h3>History</h3>
+            <ul id="systemLogEntries"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM ROW -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">CLASS ATTENDANCE BREAKDOWN</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="classChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">RFID CHECK-IN HEATMAP</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="heatChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ████████ STUDENTS PAGE ████████ -->
+    <div class="page" id="page-students">
+      <div class="page-header">
+        <h2>Student Management</h2>
+        <p>Search · Filter · Manage all enrolled students</p>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="search-bar">
+          <input class="search-input" id="studentSearch" placeholder="🔍  Search by registration number, name, class or status..." oninput="filterStudents()">
+          <select class="filter-select" id="statusFilter" onchange="filterStudents()">
+            <option value="">All Status</option>
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+            <option value="Late">Late</option>
+            <option value="Excused">Excused</option>
+          </select>
+          <select class="filter-select" id="classFilter" onchange="filterStudents()">
+            <option value="">All Classes</option>
+            <option value="Year 1">Year 1</option>
+            <option value="Year 2">Year 2</option>
+            <option value="Year 3">Year 3</option>
+            <option value="Year 4">Year 4</option>
+          </select>
+          <button class="search-btn" onclick="filterStudents()">SEARCH</button>
+          <button class="btn btn-ghost" style="white-space:nowrap" onclick="showAddStudentModal()">+ Add</button>
+        </div>
+        <div style="display:flex;gap:16px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);padding:0 4px 10px">
+          <span>TOTAL: <span style="color:var(--cyan)" id="totalCount">0</span></span>
+          <span>PRESENT: <span style="color:var(--green)" id="presentCount">0</span></span>
+          <span>ABSENT: <span style="color:var(--red)" id="absentCount">0</span></span>
+          <span>LATE: <span style="color:var(--amber)" id="lateCount">0</span></span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>REG NUMBER</th>
+                <th>STUDENT NAME</th>
+                <th>CLASS</th>
+                <th>STATUS</th>
+                <th>CHECK-IN TIME</th>
+                <th>RFID TAG</th>
+                <th>SAFETY FLAG</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+          <div id="noResults" class="no-results" style="display:none">No students found matching your search criteria.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ████████ ATTENDANCE PAGE ████████ -->
+    <div class="page" id="page-attendance">
+      <div class="page-header">
+        <h2>Attendance Records</h2>
+        <p>Daily · Weekly · Monthly attendance data</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="card stat-card">
+          <div class="stat-top"><div class="stat-icon cyan">📅</div></div>
+          <div class="stat-value" style="color:var(--cyan);font-size:24px">92.4%</div>
+          <div class="stat-label">Weekly Avg Rate</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-top"><div class="stat-icon green">🏆</div></div>
+          <div class="stat-value" style="color:var(--green);font-size:24px">Year 3</div>
+          <div class="stat-label">Best Attendance Class</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-top"><div class="stat-icon red">📉</div></div>
+          <div class="stat-value" style="color:var(--red);font-size:24px">Year 2</div>
+          <div class="stat-label">Needs Attention</div>
+        </div>
+      </div>
+      <div class="card chart-card" style="margin-bottom:14px">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Monthly Attendance Overview — All Classes</div>
+            <div class="chart-sub">Current academic term</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="tab-btn active" onclick="setAttendanceView('week',this)">Week</button>
+            <button class="tab-btn" onclick="setAttendanceView('month',this)">Month</button>
+            <button class="tab-btn" onclick="setAttendanceView('term',this)">Term</button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:250px"><canvas id="bigAttendanceChart"></canvas></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">PER CLASS ATTENDANCE RATE</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="classAttBar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">DAILY CHECK-IN TIMELINE</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="timelineChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ████████ LIVE FEED PAGE ████████ -->
+    <div class="page" id="page-livefeed">
+      <div class="page-header">
+        <h2>Live Security Feed</h2>
+        <p>6 active cameras · Real-time monitoring</p>
+      </div>
+      <div class="card" style="margin-bottom:14px;padding:12px 16px">
+        <div style="display:flex;align-items:center;gap:16px;font-family:var(--font-mono);font-size:11px">
+          <span style="color:var(--green)">● ALL SYSTEMS OPERATIONAL</span>
+          <span style="color:var(--text-secondary)">|</span>
+          <span style="color:var(--text-secondary)">CAMERAS: <span style="color:var(--cyan)">6/6 ONLINE</span></span>
+          <span style="color:var(--text-secondary)">|</span>
+          <span style="color:var(--text-secondary)">STORAGE: <span style="color:var(--amber)">78% USED</span></span>
+          <span style="color:var(--text-secondary)">|</span>
+          <span style="color:var(--text-secondary)">QUALITY: <span style="color:var(--cyan)">1080p·30fps</span></span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-ghost" style="padding:5px 12px;font-size:10px">⏺ RECORD</button>
+            <button class="btn btn-ghost" style="padding:5px 12px;font-size:10px">📸 SNAPSHOT</button>
+          </div>
+        </div>
+      </div>
+      <div class="feeds-grid" id="feedsGrid"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">CAMERA DETECTION LOG</div>
+          <div id="cameraLog" class="scrollable" style="max-height:200px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">OCCUPANCY PER ZONE</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="occupancyChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ████████ QR SCANNER PAGE ████████ -->
+    <div class="page" id="page-qrscanner">
+      <div class="page-header">
+        <h2>QR Code Identification</h2>
+        <p>Scan · Generate · Verify student QR codes</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">GENERATE STUDENT QR CODE</div>
+          <div class="qr-gen-form">
+            <input class="input-field" id="qrRegInput" placeholder="Enter Registration Number (e.g. STU-2024-001)">
+            <button class="btn btn-primary" onclick="generateQR()">GENERATE</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px">
+            <div class="qr-frame">
+              <div class="qr-corner tl"></div>
+              <div class="qr-corner tr"></div>
+              <div class="qr-corner bl"></div>
+              <div class="qr-corner br"></div>
+              <div class="qr-inner" id="qrOutput">
+                <div style="text-align:center;color:var(--text-dim);font-family:var(--font-mono);font-size:10px">
+                  Enter reg number<br>to generate QR
+                </div>
+              </div>
+            </div>
+            <div id="qrStudentInfo" style="text-align:center;display:none">
+              <div id="qrName" style="font-size:14px;font-weight:700"></div>
+              <div id="qrClass" style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono)"></div>
+            </div>
+            <button class="btn btn-ghost" id="qrDownBtn" style="display:none;font-size:11px" onclick="downloadQR()">⬇ DOWNLOAD QR</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">QR SCANNER SIMULATION</div>
+          <div style="display:flex;flex-direction:column;gap:12px;align-items:center;padding:10px">
+            <div class="qr-scanner-box" id="qrScanBox" onclick="simulateScan()" style="width:100%;max-width:280px">
+              <div class="qr-scan-line" id="qrScanLine"></div>
+              <div class="qr-frame" style="width:80px;height:80px">
+                <div class="qr-corner tl"></div>
+                <div class="qr-corner tr"></div>
+                <div class="qr-corner bl"></div>
+                <div class="qr-corner br"></div>
+              </div>
+              <div class="qr-status" id="scanStatus">CLICK TO SIMULATE SCAN</div>
+            </div>
+            <div id="scanResult" style="display:none;width:100%;padding:14px;background:var(--green-dim);border:1px solid var(--green);border-radius:10px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="font-size:28px">✅</div>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--green)" id="scanResultName"></div>
+                  <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono)" id="scanResultReg"></div>
+                  <div style="font-size:10px;color:var(--text-secondary);font-family:var(--font-mono)" id="scanResultTime"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">RECENT QR SCAN LOG</div>
+        <div id="qrScanLog" class="scrollable" style="max-height:280px"></div>
+      </div>
+    </div>
+
+    <!-- ████████ RFID PAGE ████████ -->
+    <div class="page" id="page-rfid">
+      <div class="page-header">
+        <h2>RFID Status Monitor</h2>
+        <p>Live RFID tag reads · Access control · Card management</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+        <div class="card stat-card">
+          <div class="stat-icon cyan" style="margin-bottom:8px">📡</div>
+          <div class="stat-value" style="color:var(--cyan);font-size:26px">4</div>
+          <div class="stat-label">Active Readers</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon green" style="margin-bottom:8px">✔</div>
+          <div class="stat-value" style="color:var(--green);font-size:26px">821</div>
+          <div class="stat-label">Authorized Tags</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon red" style="margin-bottom:8px">✖</div>
+          <div class="stat-value" style="color:var(--red);font-size:26px">3</div>
+          <div class="stat-label">Unauthorized Attempts</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon amber" style="margin-bottom:8px">⏳</div>
+          <div class="stat-value" style="color:var(--amber);font-size:26px">26</div>
+          <div class="stat-label">Pending Registration</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">RFID READER STATUS</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+            <div class="rfid-reader-panel" style="padding:12px;text-align:left;display:flex;align-items:center;gap:12px">
+              <div style="font-size:24px">📡</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600">Reader A — Main Gate</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--green)">● ONLINE · 847 reads today</div>
+              </div>
+              <span class="badge present">ACTIVE</span>
+            </div>
+            <div class="rfid-reader-panel" style="padding:12px;text-align:left;display:flex;align-items:center;gap:12px">
+              <div style="font-size:24px">📡</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600">Reader B — Library</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--green)">● ONLINE · 234 reads today</div>
+              </div>
+              <span class="badge present">ACTIVE</span>
+            </div>
+            <div class="rfid-reader-panel" style="padding:12px;text-align:left;display:flex;align-items:center;gap:12px">
+              <div style="font-size:24px">📡</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600">Reader C — Dormitory</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber)">⚠ SIGNAL WEAK · 89 reads today</div>
+              </div>
+              <span class="badge late">DEGRADED</span>
+            </div>
+            <div class="rfid-reader-panel" style="padding:12px;text-align:left;display:flex;align-items:center;gap:12px">
+              <div style="font-size:24px">📡</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600">Reader D — Lab Block</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--red)">✖ OFFLINE · Last seen 2h ago</div>
+              </div>
+              <span class="badge absent">OFFLINE</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">LIVE RFID TAG READS</div>
+          <div id="rfidLiveLog" class="scrollable" style="max-height:290px"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">RFID TAG REGISTRY</div>
+        <div class="search-bar">
+          <input class="search-input" id="rfidSearch" placeholder="🔍  Search by tag ID, student name..." oninput="filterRFID()">
+          <select class="filter-select" id="rfidStatusFilter" onchange="filterRFID()">
+            <option value="">All</option>
+            <option value="authorized">Authorized</option>
+            <option value="unauthorized">Unauthorized</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+        <div id="rfidGrid" class="rfid-grid"></div>
+      </div>
+    </div>
+
+    <!-- ████████ SAFETY PAGE ████████ -->
+    <div class="page" id="page-safety">
+      <div class="page-header">
+        <h2>Real-Time Safety Monitor</h2>
+        <p>Zone status · Incidents · Emergency response</p>
+      </div>
+      <div class="safety-alert-banner" id="alertBanner">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-text">
+          <div class="alert-title">ACTIVE ALERT: Unauthorized access detected — Lab Block East</div>
+          <div class="alert-desc">RFID tag #T-0049 attempted entry at 14:37:22 · Security notified · Zone locked down</div>
+        </div>
+        <button class="dismiss-btn" onclick="dismissAlert()">DISMISS</button>
+      </div>
+      <div class="zone-grid">
+        <div class="zone-card safe">
+          <div class="zone-icon">🏫</div>
+          <div class="zone-name">Main Classroom Block</div>
+          <div class="zone-count" style="color:var(--green)">243</div>
+          <div class="zone-status safe">SECURE</div>
+        </div>
+        <div class="zone-card safe">
+          <div class="zone-icon">📚</div>
+          <div class="zone-name">Library</div>
+          <div class="zone-count" style="color:var(--green)">87</div>
+          <div class="zone-status safe">SECURE</div>
+        </div>
+        <div class="zone-card caution">
+          <div class="zone-icon">🍽</div>
+          <div class="zone-name">Cafeteria</div>
+          <div class="zone-count" style="color:var(--amber)">312</div>
+          <div class="zone-status caution">CROWDED</div>
+        </div>
+        <div class="zone-card danger">
+          <div class="zone-icon">🔬</div>
+          <div class="zone-name">Lab Block East</div>
+          <div class="zone-count" style="color:var(--red)">1</div>
+          <div class="zone-status danger">⚠ BREACH</div>
+        </div>
+        <div class="zone-card safe">
+          <div class="zone-icon">🏃</div>
+          <div class="zone-name">Sports Ground</div>
+          <div class="zone-count" style="color:var(--green)">64</div>
+          <div class="zone-status safe">SECURE</div>
+        </div>
+        <div class="zone-card safe">
+          <div class="zone-icon">🏠</div>
+          <div class="zone-name">Hall 4</div>
+          <div class="zone-count" style="color:var(--green)">0</div>
+          <div class="zone-status safe">CLEAR</div>
+        </div>
+        <div class="zone-card safe">
+          <div class="zone-icon">🅿</div>
+          <div class="zone-name">Main Entrance</div>
+          <div class="zone-count" style="color:var(--green)">18</div>
+          <div class="zone-status safe">MONITORED</div>
+        </div>
+        <div class="zone-card caution">
+          <div class="zone-icon">🔧</div>
+          <div class="zone-name">Workshop</div>
+          <div class="zone-count" style="color:var(--amber)">34</div>
+          <div class="zone-status caution">SUPERVISED</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">INCIDENT LOG</div>
+          <div id="incidentLog" class="scrollable" style="max-height:280px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">SAFETY STATISTICS</div>
+          <div class="chart-wrap" style="height:250px"><canvas id="safetyChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ████████ ADMIN PAGE ████████ -->
+    <div class="page" id="page-admin">
+      <div class="page-header">
+        <h2>Admin Control Panel</h2>
+        <p>System settings · User management · Configuration</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card admin-section">
+          <div class="admin-section-title">📊 System Overview</div>
+          <div class="enrollment-grid">
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--cyan)">847</div>
+              <div class="enroll-lbl">STUDENTS</div>
+            </div>
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--green)">48</div>
+              <div class="enroll-lbl">TEACHERS</div>
+            </div>
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--amber)">6</div>
+              <div class="enroll-lbl">CAMERAS</div>
+            </div>
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--purple)">4</div>
+              <div class="enroll-lbl">RFID READERS</div>
+            </div>
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--red)">2</div>
+              <div class="enroll-lbl">ALERTS ACTIVE</div>
+            </div>
+            <div class="enroll-stat">
+              <div class="enroll-val" style="color:var(--green)">99.8%</div>
+              <div class="enroll-lbl">UPTIME</div>
+            </div>
+          </div>
+          <div class="terminal" id="adminTerminal"></div>
+        </div>
+
+        <div class="card admin-section">
+          <div class="admin-section-title">➕ Add New Student</div>
+          <div class="add-student-form">
+            <div class="form-group">
+              <div class="form-label">REG NUMBER</div>
+              <input class="form-input" id="newReg" placeholder="STU-2024-XXX">
+            </div>
+            <div class="form-group">
+              <div class="form-label">FULL NAME</div>
+              <input class="form-input" id="newName" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+              <div class="form-label">CLASS</div>
+              <select class="form-input" id="newClass">
+                <option>Year 1</option><option>Year 2</option>
+                <option>Year 3</option><option>Year 4</option>
+              </select>
+            </div>  
+            <div class="form-group">
+              <div class="form-label">RFID TAG</div>
+              <input class="form-input" id="newRfid" placeholder="T-XXXX">
+            </div>
+            <div class="form-group">
+              <div class="form-label">GUARDIAN PHONE</div>
+              <input class="form-input" id="newPhone" placeholder="+254 7XX XXX XXX">
+            </div>
+            <div class="form-group">
+              <div class="form-label">GENDER</div>
+              <select class="form-input" id="newGender">
+                <option>Male</option><option>Female</option>
+              </select>
+            </div>
+            <div class="form-full">
+              <button class="btn btn-primary" style="width:100%" onclick="addNewStudent()">REGISTER STUDENT</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card admin-section">
+        <div class="admin-section-title">⚙ System Settings</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Auto SMS Alerts</div>
+              <div class="setting-desc">Send SMS to guardian on absence</div>
+            </div>
+            <div class="toggle on" onclick="toggleSetting(this)"></div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">RFID Auto-Register</div>
+              <div class="setting-desc">Auto-log RFID check-ins</div>
+            </div>
+            <div class="toggle on" onclick="toggleSetting(this)"></div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Motion Detection</div>
+              <div class="setting-desc">AI-powered camera motion alerts</div>
+            </div>
+            <div class="toggle on" onclick="toggleSetting(this)"></div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Night Mode Cameras</div>
+              <div class="setting-desc">Enable IR night vision after 6PM</div>
+            </div>
+            <div class="toggle" onclick="toggleSetting(this)"></div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Email Reports</div>
+              <div class="setting-desc">Daily attendance report to admin</div>
+            </div>
+            <div class="toggle on" onclick="toggleSetting(this)"></div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">QR Expiry (24h)</div>
+              <div class="setting-desc">Rotate student QR codes daily</div>
+            </div>
+            <div class="toggle on" onclick="toggleSetting(this)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card admin-section">
+        <div class="admin-section-title">🔔 Notification Queue</div>
+        <div id="notifQueue" class="notification-queue"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//   DATA
+// ═══════════════════════════════════════════════════════
+const students = [
+  {reg:'STU-2024-001',name:'Amara Ochieng',cls:'year 3',status:'Present',time:'07:42',rfid:'T-1042',flag:false,gender:'F'},
+  {reg:'STU-2024-002',name:'Brian Wanjiku',cls:'year 2',status:'Absent',time:'—',rfid:'T-1043',flag:true,gender:'M'},
+  {reg:'STU-2024-003',name:'Catherine Muthoni',cls:'year 4',status:'Present',time:'07:55',rfid:'T-1044',flag:false,gender:'F'},
+  {reg:'STU-2024-004',name:'David Kamau',cls:'year 1',status:'Late',time:'08:32',rfid:'T-1045',flag:false,gender:'M'},
+  {reg:'STU-2024-005',name:'Esther Nafula',cls:'year 3',status:'Present',time:'07:38',rfid:'T-1046',flag:false,gender:'F'},
+  {reg:'STU-2024-006',name:'Felix Otieno',cls:'year 2',status:'Excused',time:'—',rfid:'T-1047',flag:false,gender:'M'},
+  {reg:'STU-2024-007',name:'Grace Njeri',cls:'year 4',status:'Present',time:'07:50',rfid:'T-1048',flag:false,gender:'F'},
+  {reg:'STU-2024-008',name:'Hassan Ibrahim',cls:'year 1',status:'Absent',time:'—',rfid:'T-1049',flag:true,gender:'M'},
+  {reg:'STU-2024-009',name:'Irene Anyango',cls:'year 3',status:'Present',time:'07:41',rfid:'T-1050',flag:false,gender:'F'},
+  {reg:'STU-2024-010',name:'James Kiprotich',cls:'year2',status:'Present',time:'07:45',rfid:'T-1051',flag:false,gender:'M'},
+  {reg:'STU-2024-011',name:'Karen Wambui',cls:'year 4',status:'Late',time:'08:15',rfid:'T-1052',flag:false,gender:'F'},
+  {reg:'STU-2024-012',name:'Liam Mutua',cls:'year 1',status:'Present',time:'07:39',rfid:'T-1053',flag:false,gender:'M'},
+  {reg:'STU-2024-013',name:'Mary Adhiambo',cls:'year 3',status:'Absent',time:'—',rfid:'T-1054',flag:false,gender:'F'},
+  {reg:'STU-2024-014',name:'Noah Cheruiyot',cls:'year 2',status:'Present',time:'07:52',rfid:'T-1055',flag:false,gender:'M'},
+  {reg:'STU-2024-015',name:'Olivia Mumo',cls:'year 4',status:'Present',time:'07:47',rfid:'T-1056',flag:false,gender:'F'},
+  {reg:'STU-2024-016',name:'Peter Auma',cls:'year 1',status:'Present',time:'07:44',rfid:'T-1057',flag:false,gender:'M'},
+  {reg:'STU-2024-017',name:'Queen Njoroge',cls:'year 3',status:'Excused',time:'—',rfid:'T-1058',flag:false,gender:'F'},
+  {reg:'STU-2024-018',name:'Ronald Kipchoge',cls:'year 2',status:'Present',time:'07:40',rfid:'T-1059',flag:false,gender:'M'},
+  {reg:'STU-2024-019',name:'Sarah Wairimu',cls:'year 4',status:'Present',time:'07:53',rfid:'T-1060',flag:false,gender:'F'},
+  {reg:'STU-2024-020',name:'Timothy Odhiambo',cls:'year 1',status:'Late',time:'08:48',rfid:'T-1061',flag:true,gender:'M'},
+];
+
+const rfidData = [
+  {tag:'T-1042',name:'Amara Ochieng',cls:'year 3',status:'authorized',time:'07:42'},
+  {tag:'T-1043',name:'Brian Wanjiku',cls:'year 2',status:'pending',time:'—'},
+  {tag:'T-1044',name:'Catherine Muthoni',cls:'year 4',status:'authorized',time:'07:55'},
+  {tag:'T-0049',name:'UNKNOWN',cls:'—',status:'unauthorized',time:'14:37'},
+  {tag:'T-1046',name:'Esther Nafula',cls:'year 3',status:'authorized',time:'07:38'},
+  {tag:'T-1047',name:'Felix Otieno',cls:'year 2',status:'authorized',time:'—'},
+  {tag:'T-1051',name:'James Kiprotich',cls:'year 2',status:'authorized',time:'07:45'},
+  {tag:'T-1052',name:'Karen Wambui',cls:'year 4',status:'pending',time:'—'},
+  {tag:'T-0082',name:'UNKNOWN',cls:'—',status:'unauthorized',time:'13:12'},
+  {tag:'T-1055',name:'Noah Cheruiyot',cls:'year 2',status:'authorized',time:'07:52'},
+  {tag:'T-1056',name:'Olivia Mumo',cls:'year 4',status:'authorized',time:'07:47'},
+  {tag:'T-0031',name:'UNKNOWN',cls:'—',status:'unauthorized',time:'11:04'},
+];
+
+const cameras = [
+  {id:'CAM-01',location:'Main Gate',persons:3,alert:false},
+  {id:'CAM-02',location:'ECA block',persons:28,alert:false},
+  {id:'CAM-03',location:'Library Entrance',persons:12,alert:false},
+  {id:'CAM-04',location:'Lab Block B',persons:1,alert:true},
+  {id:'CAM-05',location:'Cafeteria',persons:44,alert:false},
+  {id:'CAM-06',location:'Sports Ground',persons:19,alert:false},
+];
+
+const incidents = [
+  {type:'crit',icon:'🚨',id:'INC-2024-047',desc:'Unauthorized RFID access — Lab Block East, Tag T-0049',time:'14:37'},
+  {type:'warn',icon:'⚠️',id:'INC-2024-046',desc:'Overcrowding detected in Cafeteria (312 persons, limit 280)',time:'13:05'},
+  {type:'info',icon:'ℹ️',id:'INC-2024-045',desc:'Camera CAM-04 Lab Block East anomaly detected',time:'12:58'},
+  {type:'warn',icon:'⚠️',id:'INC-2024-044',desc:'Student Hassan Ibrahim (STU-2024-008) unaccounted for',time:'11:30'},
+  {type:'info',icon:'ℹ️',id:'INC-2024-043',desc:'Reader D (Lab Block) went offline',time:'10:14'},
+  {type:'crit',icon:'🚨',id:'INC-2024-042',desc:'Unauthorized entry attempt — Workshop side exit, Tag T-0082',time:'09:22'},
+];
+
+const activities = [
+  {color:'green',msg:'STU-2024-001 Amara Ochieng — Check-in via QR · Main Gate',time:'07:42'},
+  {color:'green',msg:'STU-2024-009 Irene Anyango — RFID Check-in · Main Gate',time:'07:41'},
+  {color:'amber',msg:'STU-2024-004 David Kamau — Late arrival flagged',time:'08:32'},
+  {color:'red',msg:'Tag T-0049 UNAUTHORIZED — Access denied · Lab Block',time:'14:37'},
+  {color:'cyan',msg:'QR Code generated for STU-2024-015 Olivia Mumo',time:'08:01'},
+  {color:'green',msg:'STU-2024-010 James Kiprotich — Check-in confirmed',time:'07:45'},
+  {color:'red',msg:'STU-2024-002 Brian Wanjiku — ABSENT (Guardian notified)',time:'09:00'},
+  {color:'amber',msg:'Reader D Lab Block offline — Maintenance alert sent',time:'10:14'},
+  {color:'green',msg:'STU-2024-003 Catherine Muthoni — Check-in via RFID',time:'07:55'},
+  {color:'cyan',msg:'System report generated and emailed to admin',time:'06:00'},
+];
+
+const qrLogData = [
+  {name:'Amara Ochieng',reg:'STU-2024-001',time:'07:42:13',status:'granted'},
+  {name:'Irene Anyango',reg:'STU-2024-009',time:'07:41:55',status:'granted'},
+  {name:'James Kiprotich',reg:'STU-2024-010',time:'07:45:02',status:'granted'},
+  {name:'Olivia Mumo',reg:'STU-2024-015',time:'07:47:18',status:'granted'},
+  {name:'Noah Cheruiyot',reg:'STU-2024-014',time:'07:52:34',status:'granted'},
+  {name:'UNKNOWN',reg:'—',time:'08:12:45',status:'denied'},
+];
+
+const notifications = [
+  {icon:'📲',title:'SMS sent to guardian of Brian Wanjiku',sub:'Absence notification · Auto-sent at 09:00',time:'2m ago'},
+  {icon:'🚨',title:'Security alert escalated — Lab Block',sub:'Unauthorized access INC-2024-047',time:'5m ago'},
+  {icon:'📊',title:'Daily attendance report generated',sub:'PDF sent to principal@school.edu',time:'6h ago'},
+  {icon:'⚠️',title:'RFID Reader D offline',sub:'Maintenance ticket #T-0391 created',time:'3h ago'},
+  {icon:'✅',title:'Backup completed successfully',sub:'Full system backup · 2.4GB',time:'6h ago'},
+];
+
+// ═══════════════════════════════════════════════════════
+//   NAVIGATION
+// ═══════════════════════════════════════════════════════
+const pageLabels = {
+  dashboard:'Dashboard',students:'Student Management',attendance:'Attendance Records',
+  livefeed:'Live Security Feed',safety:'Real-Time Safety',qrscanner:'QR Scanner',
+  rfid:'RFID Status',admin:'Admin Panel'
+};
+const pageCrumbs = {
+  dashboard:'Overview › Main Dashboard',students:'Students › Manage',
+  attendance:'Records › Attendance',livefeed:'Monitoring › Live CCTV',
+  safety:'Safety › Zone Monitor',qrscanner:'ID › QR Scanner',
+  rfid:'ID › RFID Status',admin:'System › Admin Panel'
+};
+
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const page = el.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    document.getElementById('topTitle').textContent = pageLabels[page];
+    document.getElementById('topCrumb').textContent = pageCrumbs[page];
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//   CLOCK
+// ═══════════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('liveClock').textContent =
+    now.toTimeString().slice(0,8);
+}
+updateClock(); setInterval(updateClock,1000);
+
+// ═══════════════════════════════════════════════════════
+//   CHARTS
+// ═══════════════════════════════════════════════════════
+Chart.defaults.color = '#6b82a0';
+Chart.defaults.borderColor = '#1e2d42';
+Chart.defaults.font.family = "'Rajdhani', sans-serif";
+Chart.defaults.font.size = 11;
+
+// Attendance Chart
+new Chart(document.getElementById('attendanceChart'),{
+  type:'bar',
+  data:{
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets:[
+      {label:'Present',data:[780,792,778,795,783,0,0],backgroundColor:'rgba(0,212,255,.7)',borderRadius:5,barPercentage:.5},
+      {label:'Absent',data:[67,55,69,52,64,0,0],backgroundColor:'rgba(255,56,85,.5)',borderRadius:5,barPercentage:.5}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#1e2d42'}}}}
+});
+
+// Trend Chart
+new Chart(document.getElementById('trendChart'),{
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[
+      {label:'Attendance %',data:[88,90,87,92,93,91,89,94,92,90,88,91],
+       borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.08)',fill:true,tension:.4,borderWidth:2,pointRadius:3},
+      {label:'Incidents',data:[8,5,9,3,4,7,6,2,5,8,10,4],
+       borderColor:'#ff3855',backgroundColor:'rgba(255,56,85,.08)',fill:true,tension:.4,borderWidth:2,pointRadius:3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#1e2d42'}}}}
+});
+
+// Class Chart
+new Chart(document.getElementById('classChart'),{
+  type:'bar',
+  data:{
+    labels:['y1','y1','y2','y2','y3','y3','y4','y4'],
+    datasets:[{label:'Attendance %',
+      data:[88,91,85,79,94,90,87,93],
+      backgroundColor:['#00d4ff88','#00e58a88','#00d4ff88','#ff385588','#00e58a88','#00d4ff88','#00d4ff88','#00e58a88'],
+      borderRadius:5}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{min:70,max:100,grid:{color:'#1e2d42'}}}}
+});
+
+// Heatmap (hourly check-ins)
+new Chart(document.getElementById('heatChart'),{
+  type:'bar',
+  data:{
+    labels:['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM'],
+    datasets:[{label:'Check-ins',
+      data:[5,380,245,40,25,18,320,60,30,12],
+      backgroundColor:'rgba(180,77,255,.6)',borderRadius:4}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#1e2d42'}}}}
+});
+
+// Big attendance chart
+const bigChart = new Chart(document.getElementById('bigAttendanceChart'),{
+  type:'line',
+  data:{
+    labels:['Mon','Tue','Wed','Thu','Fri'],
+    datasets:[
+      {label:'Form 1',data:[88,90,87,92,89],borderColor:'#00d4ff',tension:.4,fill:false,borderWidth:2},
+      {label:'Form 2',data:[82,85,80,88,83],borderColor:'#b44dff',tension:.4,fill:false,borderWidth:2},
+      {label:'Form 3',data:[91,93,90,95,94],borderColor:'#00e58a',tension:.4,fill:false,borderWidth:2},
+      {label:'Form 4',data:[86,87,85,89,91],borderColor:'#ffb800',tension:.4,fill:false,borderWidth:2},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}}},
+    scales:{x:{grid:{display:false}},y:{min:70,max:100,grid:{color:'#1e2d42'}}}}
+});
+
+function setAttendanceView(view,el){
+  document.querySelectorAll('#page-attendance .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const week = {labels:['Mon','Tue','Wed','Thu','Fri'],d:[[88,90,87,92,89],[82,85,80,88,83],[91,93,90,95,94],[86,87,85,89,91]]};
+  const month = {labels:['W1','W2','W3','W4'],d:[[89,91,88,90],[83,86,82,85],[92,94,91,93],[87,88,86,89]]};
+  const term = {labels:['Jan','Feb','Mar','Apr'],d:[[87,89,90,92],[81,83,85,86],[90,91,93,94],[85,86,87,89]]};
+  const v = view==='week'?week:view==='month'?month:term;
+  bigChart.data.labels = v.labels;
+  bigChart.data.datasets.forEach((ds,i)=>ds.data=v.d[i]);
+  bigChart.update();
+}
+
+new Chart(document.getElementById('classAttBar'),{
+  type:'horizontalBar'||'bar',
+  data:{
+    labels:['Year 1','Year 2','Year 3','Year 4','Year 1','Year 2'],
+    datasets:[{label:'%',data:[88,79,94,93,90,85],
+      backgroundColor:'rgba(0,212,255,.5)',borderRadius:4}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{min:70,max:100,grid:{color:'#1e2d42'}},y:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('timelineChart'),{
+  type:'line',
+  data:{
+    labels:['6:30','7:00','7:30','8:00','8:30','9:00'],
+    datasets:[{label:'Check-ins',data:[12,380,310,85,42,18],
+      borderColor:'#00e58a',backgroundColor:'rgba(0,229,138,.1)',fill:true,tension:.4,borderWidth:2,pointRadius:3}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#1e2d42'}}}}
+});
+
+new Chart(document.getElementById('occupancyChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Classrooms','Library','Cafeteria','Lab','Sports','Other'],
+    datasets:[{data:[243,87,312,1,64,36],
+      backgroundColor:['#00d4ffaa','#00e58aaa','#ffb800aa','#ff3855aa','#b44dffaa','#3a4d62'],
+      borderWidth:2,borderColor:'#101828'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'right',labels:{boxWidth:10,padding:8}}},
+    cutout:'65%'}
+});
+
+new Chart(document.getElementById('safetyChart'),{
+  type:'radar',
+  data:{
+    labels:['Main Gate','Classrooms','Library','Cafeteria','Lab Block','Dormitory'],
+    datasets:[
+      {label:'Incidents This Week',data:[2,1,0,3,4,0],
+       borderColor:'#ff3855',backgroundColor:'rgba(255,56,85,.15)',borderWidth:2,pointRadius:4},
+      {label:'Security Score',data:[9,8,10,6,4,9],
+       borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.08)',borderWidth:2,pointRadius:4}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}}},
+    scales:{r:{grid:{color:'#1e2d42'},pointLabels:{font:{size:10}},ticks:{display:false}}}}
+});
+
+// ═══════════════════════════════════════════════════════
+//   STUDENT TABLE
+// ═══════════════════════════════════════════════════════
+function renderStudents(list){
+  const tbody = document.getElementById('studentTableBody');
+  const noRes = document.getElementById('noResults');
+  if(!list.length){ tbody.innerHTML=''; noRes.style.display='block'; return; }
+  noRes.style.display='none';
+  tbody.innerHTML = list.map(s=>`
+    <tr>
+      <td><span class="reg-num">${s.reg}</span></td>
+      <td style="font-weight:600">${s.name}</td>
+      <td>${s.cls}</td>
+      <td><span class="badge ${s.status.toLowerCase()}">${s.status}</span></td>
+      <td style="font-family:var(--font-mono);font-size:12px">${s.time}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--purple)">${s.rfid}</td>
+      <td>${s.flag?'<span class="badge absent">⚠ FLAGGED</span>':'<span style="color:var(--text-dim);font-size:11px">—</span>'}</td>
+      <td>
+        <button class="action-btn" onclick="viewStudent('${s.reg}')">View</button>
+        <button class="action-btn" style="margin-left:4px" onclick="markAttendance('${s.reg}')">Mark</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('totalCount').textContent = list.length;
+  document.getElementById('presentCount').textContent = list.filter(s=>s.status==='Present').length;
+  document.getElementById('absentCount').textContent = list.filter(s=>s.status==='Absent').length;
+  document.getElementById('lateCount').textContent = list.filter(s=>s.status==='Late').length;
+}
+
+function filterStudents(){
+  const q = document.getElementById('studentSearch').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const cl = document.getElementById('classFilter').value;
+  const filtered = students.filter(s=>{
+    const matchQ = !q || s.reg.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.cls.toLowerCase().includes(q);
+    const matchSt = !st || s.status === st;
+    const matchCl = !cl || s.cls.startsWith(cl);
+    return matchQ && matchSt && matchCl;
+  });
+  renderStudents(filtered);
+}
+
+function viewStudent(reg){
+  const s = students.find(x=>x.reg===reg);
+  if(s) alert(`Student Profile\n\nReg: ${s.reg}\nName: ${s.name}\nClass: ${s.cls}\nStatus: ${s.status}\nCheck-in: ${s.time}\nRFID: ${s.rfid}\nFlag: ${s.flag?'YES':'No'}`);
+}
+function markAttendance(reg){
+  const s = students.find(x=>x.reg===reg);
+  if(s){
+    const opts=['Present','Absent','Late','Excused'];
+    const i = opts.indexOf(s.status);
+    s.status = opts[(i+1)%opts.length];
+    filterStudents();
+    logTerminal(`Attendance updated: ${reg} → ${s.status}`);
+  }
+}
+
+renderStudents(students);
+
+// ═══════════════════════════════════════════════════════
+//   ACTIVITY FEED
+// ═══════════════════════════════════════════════════════
+function renderActivity(){
+  document.getElementById('activityFeed').innerHTML = activities.map(a=>`
+    <div class="activity-item">
+      <div class="act-dot ${a.color}"></div>
+      <div class="act-content">
+        <div class="act-msg">${a.msg}</div>
+        <div class="act-time">${a.time}</div>
+      </div>
+    </div>`).join('');
+}
+renderActivity();
+
+// load any saved history from localStorage so the log survives page reloads
+(function(){
+  const saved = JSON.parse(localStorage.getItem('activityLog')||'[]');
+  if(saved.length){
+    activities.splice(0, activities.length, ...saved);
+    renderActivity();
+    const sysUl = document.getElementById('systemLogEntries');
+    if(sysUl){
+      // show all previous entries in reverse order (oldest at bottom)
+      saved.slice().reverse().forEach(e=>{
+        const li = document.createElement('li');
+        li.textContent = `${e.time} — ${e.msg}`;
+        sysUl.appendChild(li);
+      });
+    }
+  }
+})();
+
+// helper that other code can use to record an entry in the activity log
+function logActivity(msg,color='cyan'){
+  const time = new Date().toTimeString().slice(0,8);
+  const entry = {color,msg,time};
+  activities.unshift(entry);
+  if(activities.length>100) activities.pop();          // keep buffer reasonable
+  renderActivity();
+
+  // also update persistent log panel if it exists
+  const sysUl = document.getElementById('systemLogEntries');
+  if(sysUl){
+    const li = document.createElement('li');
+    li.textContent = `${time} — ${msg}`;
+    sysUl.prepend(li);
+  }
+
+  localStorage.setItem('activityLog', JSON.stringify(activities));
+  console.log('LOG:',msg);
+}
+
+// sample generator stays the same
+setInterval(()=>{
+  const msgs=[
+    {color:'green',msg:'New RFID check-in — Gate A',time:new Date().toTimeString().slice(0,8)},
+    {color:'cyan',msg:'QR scan validated successfully',time:new Date().toTimeString().slice(0,8)},
+    {color:'amber',msg:'Motion detected — Library exit',time:new Date().toTimeString().slice(0,8)},
+    {color:'green',msg:'Attendance auto-synced to database',time:new Date().toTimeString().slice(0,8)},
+  ];
+  activities.unshift(msgs[Math.floor(Math.random()*msgs.length)]);
+  if(activities.length>15) activities.pop();
+  renderActivity();
+}, 6000);
+
+// ═══════════════════════════════════════════════════════
+//   LIVE FEED
+// ═══════════════════════════════════════════════════════
+function renderFeeds(){
+  document.getElementById('feedsGrid').innerHTML = cameras.map(c=>`
+    <div class="feed-cell ${c.alert?'alert-feed':''}">
+      <div class="feed-bg"></div>
+      <div class="feed-sim"></div>
+      <div class="feed-noise"></div>
+      <div class="scan-line"></div>
+      ${[...Array(c.alert?1:Math.min(3,Math.floor(c.persons/10)+1))].map((_,i)=>`
+        <div class="feed-person" style="left:${20+i*25}%;top:${40+i*10}%"></div>`).join('')}
+      <div class="feed-crosshair"></div>
+      <div class="feed-overlay"></div>
+      <div class="feed-hud">
+        <div class="feed-top">
+          <div class="feed-id">${c.id}</div>
+          <div class="feed-live"><div class="feed-live-dot"></div>${c.alert?'ALERT':'LIVE'}</div>
+        </div>
+        <div class="feed-bottom">
+          <div class="feed-location">${c.location}</div>
+          <div class="feed-count">${c.persons} person${c.persons!==1?'s':''} detected</div>
+          <div class="feed-time" id="feedTime-${c.id}"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+renderFeeds();
+
+// Camera detection log
+function renderCameraLog(){
+  const msgs=[
+    'CAM-01 · 3 persons entering Main Gate',
+    'CAM-02 · Motion detected — Classroom Block A',
+    'CAM-04 · ALERT: Unauthorized person detected',
+    'CAM-05 · Occupancy high: 44 persons in cafeteria',
+    'CAM-03 · Library entry — student badge detected',
+    'CAM-06 · Sports activity normal',
+    'CAM-01 · 2 vehicles in parking area',
+  ];
+  const log = document.getElementById('cameraLog');
+  if(!log) return;
+  log.innerHTML = msgs.map((m,i)=>`
+    <div class="activity-item">
+      <div class="act-dot ${m.includes('ALERT')?'red':m.includes('high')?'amber':'cyan'}"></div>
+      <div class="act-content">
+        <div class="act-msg" style="font-size:11px;font-family:var(--font-mono)">${m}</div>
+        <div class="act-time">${new Date(Date.now()-i*180000).toTimeString().slice(0,8)}</div>
+      </div>
+    </div>`).join('');
+}
+renderCameraLog();
+setInterval(renderCameraLog,8000);
+
+// ═══════════════════════════════════════════════════════
+//   QR SCANNER
+// ═══════════════════════════════════════════════════════
+let qrInstance = null;
+function generateQR(){
+  const reg = document.getElementById('qrRegInput').value.trim();
+  if(!reg){ alert('Please enter a registration number'); return; }
+  const s = students.find(x=>x.reg.toLowerCase()===reg.toLowerCase()) ||
+            {name:'Student Name',cls:'Form X',reg:reg};
+  const out = document.getElementById('qrOutput');
+  out.innerHTML = '';
+  if(qrInstance) qrInstance = null;
+  try {
+    qrInstance = new QRCode(out, {
+      text:`EDUSHIELD:${reg}:${s.name}:${new Date().toISOString()}`,
+      width:100,height:100,colorDark:'#00d4ff',colorLight:'#060a12',
+      correctLevel:QRCode.CorrectLevel.H
+    });
+  } catch(e) {
+    out.innerHTML = `<div style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--cyan)">QR: ${reg}<br><br>████████<br>██  ████<br>████  ██<br>████████</div>`;
+  }
+  document.getElementById('qrStudentInfo').style.display='block';
+  document.getElementById('qrName').textContent = s.name;
+  document.getElementById('qrClass').textContent = s.cls + ' · ' + reg;
+  document.getElementById('qrDownBtn').style.display='block';
+  logTerminal(`QR generated for ${reg} — ${s.name}`);
+}
+
+function downloadQR(){
+  const canvas = document.querySelector('#qrOutput canvas');
+  if(canvas){
+    const a = document.createElement('a');
+    a.download = `qr_${document.getElementById('qrRegInput').value}.png`;
+    a.href = canvas.toDataURL();
+    a.click();
+  }
+}
+
+let scanIdx = 0;
+function simulateScan(){
+  const box = document.getElementById('qrScanBox');
+  const line = document.getElementById('qrScanLine');
+  const status = document.getElementById('scanStatus');
+  box.classList.add('scanning');
+  line.style.display='block';
+  status.textContent = 'SCANNING...';
+  setTimeout(()=>{
+    const student = students[scanIdx % students.length];
+    scanIdx++;
+    box.classList.remove('scanning');
+    line.style.display='none';
+    status.textContent = 'SCAN COMPLETE';
+    const result = document.getElementById('scanResult');
+    result.style.display='block';
+    document.getElementById('scanResultName').textContent = student.name;
+    document.getElementById('scanResultReg').textContent = student.reg + ' · ' + student.cls;
+    document.getElementById('scanResultTime').textContent = 'Scanned: ' + new Date().toTimeString().slice(0,8);
+    qrLogData.unshift({name:student.name,reg:student.reg,time:new Date().toTimeString().slice(0,8),status:'granted'});
+    renderQRLog();
+    logTerminal(`QR scan: ${student.reg} — ${student.name} — ACCESS GRANTED`);
+    setTimeout(()=>{ result.style.display='none'; status.textContent='CLICK TO SIMULATE SCAN'; },3000);
+  }, 2000);
+}
+
+function renderQRLog(){
+  const log = document.getElementById('qrScanLog');
+  if(!log) return;
+  log.innerHTML = qrLogData.map(q=>`
+    <div class="qr-result-item">
+      <div class="qr-result-avatar">${q.status==='granted'?'✅':'❌'}</div>
+      <div class="qr-result-info">
+        <div class="qr-result-name">${q.name}</div>
+        <div class="qr-result-reg">${q.reg}</div>
+        <div class="qr-result-time">Scanned at ${q.time}</div>
+      </div>
+      <span class="badge ${q.status==='granted'?'present':'absent'}">${q.status.toUpperCase()}</span>
+    </div>`).join('');
+}
+renderQRLog();
+
+// ═══════════════════════════════════════════════════════
+//   RFID
+// ═══════════════════════════════════════════════════════
+function renderRFID(list){
+  document.getElementById('rfidGrid').innerHTML = list.map(r=>`
+    <div class="rfid-item ${r.status}">
+      <div class="rfid-chip ${r.status==='authorized'?'auth':r.status==='unauthorized'?'unauth':'pend'}">
+        <div class="rfid-chip-inner"></div>
+      </div>
+      <div class="rfid-info">
+        <div class="rfid-tag">${r.tag}</div>
+        <div class="rfid-name">${r.name}</div>
+        <div class="rfid-meta">${r.cls} · Last: ${r.time}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="rfid-status-dot" style="background:${r.status==='authorized'?'var(--green)':r.status==='unauthorized'?'var(--red)':'var(--amber)'}"></div>
+        <span class="badge ${r.status==='authorized'?'present':r.status==='unauthorized'?'absent':'late'}" style="font-size:8px">${r.status.toUpperCase()}</span>
+      </div>
+    </div>`).join('');
+}
+renderRFID(rfidData);
+
+function filterRFID(){
+  const q = document.getElementById('rfidSearch').value.toLowerCase();
+  const st = document.getElementById('rfidStatusFilter').value;
+  renderRFID(rfidData.filter(r=>{
+    const matchQ = !q || r.tag.toLowerCase().includes(q) || r.name.toLowerCase().includes(q);
+    const matchSt = !st || r.status===st;
+    return matchQ && matchSt;
+  }));
+}
+
+function renderRFIDLive(){
+  const log = document.getElementById('rfidLiveLog');
+  if(!log) return;
+  const reads = [
+    {tag:'T-1042',name:'Amara Ochieng',loc:'Main Gate',status:'authorized',time:new Date(Date.now()-30000).toTimeString().slice(0,8)},
+    {tag:'T-1055',name:'Noah Cheruiyot',loc:'Library',status:'authorized',time:new Date(Date.now()-120000).toTimeString().slice(0,8)},
+    {tag:'T-0049',name:'UNKNOWN',loc:'Lab Block East',status:'unauthorized',time:'14:37:22'},
+    {tag:'T-1056',name:'Olivia Mumo',loc:'Main Gate',status:'authorized',time:'07:47:18'},
+    {tag:'T-0082',name:'UNKNOWN',loc:'Workshop',status:'unauthorized',time:'13:12:05'},
+    {tag:'T-1044',name:'Catherine Muthoni',loc:'Main Gate',status:'authorized',time:'07:55:02'},
+  ];
+  log.innerHTML = reads.map(r=>`
+    <div class="activity-item">
+      <div class="act-dot ${r.status==='authorized'?'green':'red'}"></div>
+      <div class="act-content">
+        <div style="font-family:var(--font-mono);font-size:11px;color:${r.status==='authorized'?'var(--cyan)':'var(--red)'}">${r.tag}</div>
+        <div class="act-msg" style="font-size:11px">${r.name} — ${r.loc}</div>
+        <div class="act-time">${r.time} · <span style="color:${r.status==='authorized'?'var(--green)':'var(--red)'}">${r.status.toUpperCase()}</span></div>
+      </div>
+    </div>`).join('');
+}
+renderRFIDLive();
+setInterval(renderRFIDLive, 7000);
+
+// ═══════════════════════════════════════════════════════
+//   SAFETY
+// ═══════════════════════════════════════════════════════
+function renderIncidents(){
+  document.getElementById('incidentLog').innerHTML = incidents.map(inc=>`
+    <div class="incident-item">
+      <div class="inc-type ${inc.type}">${inc.icon}</div>
+      <div class="inc-desc">
+        <div class="inc-id">${inc.id}</div>
+        <div>${inc.desc}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="inc-time">${inc.time}</div>
+        <button class="inc-resolve" onclick="resolveInc('${inc.id}',this)" style="margin-top:4px">RESOLVE</button>
+      </div>
+    </div>`).join('');
+}
+renderIncidents();
+
+function resolveInc(id,btn){
+  btn.closest('.incident-item').style.opacity='.4';
+  btn.textContent = 'RESOLVED';
+  btn.style.background='var(--border)';
+  btn.style.color='var(--text-secondary)';
+}
+function dismissAlert(){ document.getElementById('alertBanner').style.display='none'; }
+
+// ═══════════════════════════════════════════════════════
+//   ADMIN
+// ═══════════════════════════════════════════════════════
+function renderNotifications(){
+  document.getElementById('notifQueue').innerHTML = notifications.map(n=>`
+    <div class="notif-item">
+      <div class="notif-icon">${n.icon}</div>
+      <div class="notif-body">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-sub">${n.sub}</div>
+      </div>
+      <div class="notif-time">${n.time}</div>
+    </div>`).join('');
+}
+renderNotifications();
+
+function toggleSetting(el){ el.classList.toggle('on'); }
+
+const termLines = [
+  {cls:'term-prompt',t:'[SYS] EduShield v3.4.1 initialized'},
+  {cls:'term-ok',t:'[OK] Database connection established'},
+  {cls:'term-ok',t:'[OK] 6 cameras online'},
+  {cls:'term-ok',t:'[OK] RFID readers: 3/4 active'},
+  {cls:'term-err',t:'[ERR] Reader D offline — retry in 30s'},
+  {cls:'term-ok',t:'[OK] Attendance sync complete: 847 records'},
+  {cls:'term-dim',t:'[INFO] Daily backup scheduled at 23:00'},
+  {cls:'term-ok',t:'[OK] SMS gateway connected'},
+];
+let termIdx = 0;
+function logTerminal(msg){
+  const t = document.getElementById('adminTerminal');
+  if(!t) return;
+  const line = document.createElement('div');
+  line.className='term-line';
+  line.innerHTML=`<span class="term-ok">[${new Date().toTimeString().slice(0,8)}]</span> <span class="term-prompt">${msg}</span>`;
+  t.appendChild(line);
+  t.scrollTop=t.scrollHeight;
+}
+function initTerminal(){
+  const t = document.getElementById('adminTerminal');
+  if(!t) return;
+  termLines.forEach((l,i)=>setTimeout(()=>{
+    const div=document.createElement('div'); div.className='term-line';
+    div.innerHTML=`<span class="${l.cls}">${l.t}</span>`;
+    t.appendChild(div); t.scrollTop=t.scrollHeight;
+  },i*300));
+  setTimeout(()=>{
+    const cur=document.createElement('div'); cur.className='term-line';
+    cur.innerHTML='<span class="term-prompt">$ </span><span class="term-cursor">_</span>';
+    t.appendChild(cur);
+  },termLines.length*300+200);
+}
+initTerminal();
+setInterval(()=>logTerminal(`Auto-sync: ${students.filter(s=>s.status==='Present').length} students marked present`), 15000);
+
+function addNewStudent(){
+  const reg=document.getElementById('newReg').value.trim();
+  const name=document.getElementById('newName').value.trim();
+  const cls=document.getElementById('newClass').value;
+  const rfid=document.getElementById('newRfid').value.trim();
+  if(!reg||!name){ alert('Please fill in Registration Number and Name'); return; }
+  const existing = students.find(s=>s.reg===reg);
+  if(existing){ alert('Registration number already exists!'); return; }
+  students.unshift({reg,name,cls,status:'Present',time:new Date().toTimeString().slice(0,5),rfid:rfid||'PENDING',flag:false});
+  renderStudents(students);
+  logTerminal(`New student enrolled: ${reg} — ${name}`);
+  notifications.unshift({icon:'👤',title:`New student registered: ${name}`,sub:`${reg} · ${cls}`,time:'Just now'});
+  renderNotifications();
+  ['newReg','newName','newRfid','newPhone'].forEach(id=>document.getElementById(id).value='');
+  alert(`✅ Student ${name} (${reg}) registered successfully!`);
+}
+
+// ═══════════════════════════════════════════════════════
+//   REAL-TIME SIMULATIONS
+// ═══════════════════════════════════════════════════════
+setInterval(()=>{
+  cameras.forEach(c=>{
+    const delta = Math.floor(Math.random()*5)-2;
+    c.persons = Math.max(0,c.persons+delta);
+  });
+  const el = document.getElementById('feedsGrid');
+  if(el) renderFeeds();
+}, 5000);
+
+// Clock for feed cells
+setInterval(()=>{
+  cameras.forEach(c=>{
+    const el = document.getElementById('feedTime-'+c.id);
+    if(el) el.textContent = new Date().toTimeString().slice(0,8);
+  });
+}, 1000);
+
+console.log('%cEduShield Safety System v3.4.1 Loaded', 'color:#00d4ff;font-size:14px;font-weight:bold');
+</script>
+</body>
+</html>
