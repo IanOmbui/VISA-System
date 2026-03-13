@@ -1,2 +1,2 @@
 # VISA-System
-Smart School Attenfance System
+Smart School Attendance System
